@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini MU Mobile - Modo Clásico</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 10px;
+            user-select: none;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            border: 2px solid #555;
+            border-radius: 10px;
+            padding: 15px;
+            background: #1a1a1a;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+        h1 { color: #ffd700; margin-bottom: 2px; font-size: 22px; text-shadow: 0 0 5px #f00; }
+        .zone-title { color: #3498db; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
+        .stats-panel, .monster-panel, .craft-panel {
+            background: #252525;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .hp-bar-bg {
+            background: #555;
+            height: 18px;
+            border-radius: 9px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .hp-bar-fill {
+            background: #e74c3c;
+            height: 100%;
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+        .btn {
+            background: #d35400;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 3px;
+        }
+        .btn:active { transform: scale(0.98); background: #e67e22; }
+        .btn-attack {
+            background: #c0392b;
+            width: 95%;
+            font-size: 18px;
+            padding: 12px;
+            margin-top: 5px;
+        }
+        .btn-upgrade {
+            background: #27ae60;
+            width: 90%;
+            margin-top: 5px;
+        }
+        .log-box {
+            height: 75px;
+            background: #000;
+            border: 1px solid #333;
+            overflow-y: auto;
+            font-size: 11px;
+            text-align: left;
+            padding: 5px;
+            color: #2ecc71;
+        }
+        .item-text { color: #f1c40f; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚔️ MINI MU ⚔️</h1>
+    <div class="zone-title" id="zone-name">📍 Lorencia</div>
+    <div id="player-class" style="color:#aaa; font-size:13px;">Dark Knight (Nv. <span id="level">1</span>)</div>
+
+    <!-- Panel del Monstruo -->
+    <div class="monster-panel">
+        <h3 id="monster-name" style="margin: 3px 0; color: #e74c3c;">SPIDER</h3>
+        <div class="hp-bar-bg">
+            <div id="monster-hp" class="hp-bar-fill"></div>
+        </div>
+        <div style="font-size: 12px;">HP: <span id="monster-hp-text">20/20</span></div>
+    </div>
+
+    <button class="btn btn-attack" onclick="playerAttack()">⚔️ ¡ATACAR! ⚔️</button>
+
+    <!-- Estadísticas -->
+    <div class="stats-panel">
+        <div>💰 Zen: <span id="zen" style="color:#ffd700;">0</span> | 💎 Bless: <span id="bless" style="color:#3498db;">0</span></div>
+        <div>✨ Puntos Libres: <span id="points" style="color:#2ecc71;">0</span></div>
+        <hr style="border-color:#444; margin: 6px 0;">
+        <div style="display:flex; justify-content:space-around;">
+            <span>Fuerza (STR): <b id="str">10</b></span>
+            <span>Agilidad (AGI): <b id="agi">10</b></span>
+        </div>
+        <div style="margin-top:6px;">
+            <button class="btn" onclick="addStat('str')">+ Fuerza</button>
+            <button class="btn" onclick="addStat('agi')">+ Agilidad</button>
+        </div>
+    </div>
+
+    <!-- Mejoras de Equipo (Forja) -->
+    <div class="craft-panel">
+        <div style="font-size:12px; font-weight:bold; color:#f39c12;">🔨 Forja de Equipo (+<span id="weapon-lvl">0</span>)</div>
+        <button class="btn btn-upgrade" onclick="upgradeWeapon()">Mejorar Arma (Costo: 1 Bless)</button>
+    </div>
+
+    <!-- Registro de Combate -->
+    <div class="log-box" id="log">
+        <div>¡Bienvenido al continente de MU! Derrota monstruos para subir de nivel.</div>
+    </div>
+</div>
+
+<script>
+    // Datos del Jugador
+    let player = {
+        level: 1,
+        exp: 0,
+        expNext: 25,
+        str: 10,
+        agi: 10,
+        weaponLvl: 0,
+        points: 0,
+        zen: 0,
+        bless: 0
+    };
+
+    // Zonas y Monstruos con Progresión Lineal
+    const monsters = [
+        { name: "Spider", hp: 25, maxHp: 25, exp: 10, zen: 5, zone: "Lorencia", levelReq: 1 },
+        { name: "Budge Dragon", hp: 55, maxHp: 55, exp: 22, zen: 12, zone: "Lorencia", levelReq: 3 },
+        { name: "Bull Fighter", hp: 120, maxHp: 120, exp: 50, zen: 28, zone: "Lorencia", levelReq: 7 },
+        { name: "Lich", hp: 280, maxHp: 280, exp: 110, zen: 65, zone: "Dungeon", levelReq: 12 },
+        { name: "Skeleton Warrior", hp: 600, maxHp: 600, exp: 240, zen: 130, zone: "Dungeon", levelReq: 20 },
+        { name: "Yeti", hp: 1200, maxHp: 1200, exp: 500, zen: 280, zone: "Devias", levelReq: 30 },
+        { name: "Ice Queen", hp: 2500, maxHp: 2500, exp: 1100, zen: 600, zone: "Devias", levelReq: 45 },
+        { name: "Poison Shadow", hp: 5000, maxHp: 5000, exp: 2300, zen: 1200, zone: "LostTower", levelReq: 60 },
+        { name: "Balgass Sentinel", hp: 12000, maxHp: 12000, exp: 5000, zen: 2500, zone: "LostTower", levelReq: 80 }
+    ];
+
+    let monster = { ...monsters[0] };
+
+    // Ataque del Jugador
+    function playerAttack() {
+        let weaponBonus = player.weaponLvl * 8;
+        let baseDamage = Math.floor(player.str * 1.3) + weaponBonus;
+        let damage = baseDamage + Math.floor(Math.random() * 6);
+        
+        monster.hp -= damage;
+
+        if (monster.hp <= 0) {
+            monster.hp = 0;
+            updateUI();
+            onMonsterDefeated();
+        } else {
+            updateUI();
+        }
+    }
+
+    // Monstruo derrotado
+    function onMonsterDefeated() {
+        log(`¡Derrotaste a ${monster.name}! +${monster.exp} EXP, +${monster.zen} Zen.`);
+        
+        player.zen += monster.zen;
+        player.exp += monster.exp;
+
+        // Drop de Jewel of Bless (6% probabilidad)
+        if (Math.random() < 0.06) {
+            player.bless += 1;
+            log(`<span class="item-text">✨ ¡Cayó una Jewel of Bless!</span>`);
+        }
+
+        // Subida de Nivel
+        while (player.exp >= player.expNext) {
+            levelUp();
+        }
+
+        selectNextMonster();
+        updateUI();
+    }
+
+    function selectNextMonster() {
+        let available = monsters.filter(m => m.levelReq <= player.level);
+        let selected = available[available.length - 1]; // Selecciona el monstruo más fuerte disponible
+        monster = { ...selected, maxHp: selected.hp };
+    }
+
+    function levelUp() {
+        player.level++;
+        player.exp -= player.expNext;
+        player.expNext = Math.floor(player.expNext * 1.35);
+        player.points += 5;
+        log(`🌟 ¡NIVEL ALCANZADO: ${player.level}! +5 Puntos de Stat.`);
+    }
+
+    function addStat(stat) {
+        if (player.points > 0) {
+            player[stat] += 1;
+            player.points--;
+            updateUI();
+        }
+    }
+
+    function upgradeWeapon() {
+        if (player.bless >= 1) {
+            player.bless -= 1;
+            player.weaponLvl += 1;
+            log(`<span class="item-text">🔨 ¡Arma mejorada a +${player.weaponLvl}! +8 Daño adicional.</span>`);
+            updateUI();
+        } else {
+            log(`❌ Necesitas 1 Jewel of Bless para mejorar.`);
+        }
+    }
+
+    function log(msg) {
+        const logBox = document.getElementById("log");
+        logBox.innerHTML = `<div>${msg}</div>` + logBox.innerHTML;
+    }
+
+    function updateUI() {
+        document.getElementById("level").innerText = player.level;
+        document.getElementById("zen").innerText = player.zen;
+        document.getElementById("bless").innerText = player.bless;
+        document.getElementById("points").innerText = player.points;
+        document.getElementById("str").innerText = player.str;
+        document.getElementById("agi").innerText = player.agi;
+        document.getElementById("weapon-lvl").innerText = player.weaponLvl;
+        document.getElementById("zone-name").innerText = `📍 Zona: ${monster.zone}`;
+
+        document.getElementById("monster-name").innerText = monster.name;
+        document.getElementById("monster-hp-text").innerText = `${monster.hp}/${monster.maxHp}`;
+        
+        let hpPercent = (monster.hp / monster.maxHp) * 100;
+        document.getElementById("monster-hp").style.width = `${hpPercent}%`;
+    }
+
+    // Auto-Ataque progresivo por Agilidad
+    setInterval(() => {
+        playerAttack();
+    }, Math.max(900 - (player.agi * 12), 200));
+
+    updateUI();
+</script>
+</body>
+</html>
