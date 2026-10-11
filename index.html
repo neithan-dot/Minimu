@@ -2,216 +2,276 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini MU Mobile - Modo Clásico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mini MU 2D Mobile</title>
     <style>
+        * { box-sizing: border-box; touch-action: manipulation; }
         body {
-            background-color: #111;
+            background-color: #0d0d0d;
             color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             text-align: center;
             margin: 0;
-            padding: 10px;
+            padding: 5px;
             user-select: none;
         }
-        .container {
-            max-width: 400px;
+        .game-container {
+            max-width: 420px;
             margin: 0 auto;
-            border: 2px solid #555;
-            border-radius: 10px;
-            padding: 15px;
-            background: #1a1a1a;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
-        }
-        h1 { color: #ffd700; margin-bottom: 2px; font-size: 22px; text-shadow: 0 0 5px #f00; }
-        .zone-title { color: #3498db; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
-        .stats-panel, .monster-panel, .craft-panel {
-            background: #252525;
-            padding: 10px;
-            margin: 8px 0;
+            border: 2px solid #444;
             border-radius: 8px;
-            border: 1px solid #444;
+            padding: 8px;
+            background: #181818;
         }
-        .hp-bar-bg {
-            background: #555;
-            height: 18px;
-            border-radius: 9px;
-            overflow: hidden;
-            margin: 8px 0;
+        h2 { color: #ffd700; margin: 2px 0; font-size: 18px; text-shadow: 0 0 5px #f00; }
+        .hud {
+            font-size: 12px;
+            background: #222;
+            padding: 5px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-around;
         }
-        .hp-bar-fill {
-            background: #e74c3c;
-            height: 100%;
+        canvas {
+            background: #2d371e; /* Color hierba de Lorencia */
+            border: 2px solid #555;
+            border-radius: 6px;
+            display: block;
+            margin: 0 auto;
             width: 100%;
-            transition: width 0.1s linear;
+            max-width: 380px;
+            height: auto;
         }
-        .btn {
+        /* Controles Móviles */
+        .controls-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            padding: 0 5px;
+        }
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 40px);
+            grid-template-rows: repeat(3, 40px);
+            gap: 3px;
+        }
+        .btn-pad {
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-pad:active { background: #666; }
+        .btn-attack-2d {
+            background: #c0392b;
+            color: white;
+            border: none;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 15px;
+            box-shadow: 0 4px #7f8c8d;
+        }
+        .btn-attack-2d:active { transform: translateY(3px); box-shadow: 0 1px #7f8c8d; }
+        .panel-stats {
+            background: #222;
+            margin-top: 8px;
+            padding: 6px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        .btn-stat {
             background: #d35400;
             color: white;
             border: none;
-            padding: 8px 12px;
-            font-size: 13px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 3px;
-        }
-        .btn:active { transform: scale(0.98); background: #e67e22; }
-        .btn-attack {
-            background: #c0392b;
-            width: 95%;
-            font-size: 18px;
-            padding: 12px;
-            margin-top: 5px;
-        }
-        .btn-upgrade {
-            background: #27ae60;
-            width: 90%;
-            margin-top: 5px;
-        }
-        .log-box {
-            height: 75px;
-            background: #000;
-            border: 1px solid #333;
-            overflow-y: auto;
+            padding: 4px 8px;
             font-size: 11px;
-            text-align: left;
-            padding: 5px;
-            color: #2ecc71;
+            border-radius: 3px;
+            margin: 2px;
         }
-        .item-text { color: #f1c40f; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>⚔️ MINI MU ⚔️</h1>
-    <div class="zone-title" id="zone-name">📍 Lorencia</div>
-    <div id="player-class" style="color:#aaa; font-size:13px;">Dark Knight (Nv. <span id="level">1</span>)</div>
-
-    <!-- Panel del Monstruo -->
-    <div class="monster-panel">
-        <h3 id="monster-name" style="margin: 3px 0; color: #e74c3c;">SPIDER</h3>
-        <div class="hp-bar-bg">
-            <div id="monster-hp" class="hp-bar-fill"></div>
-        </div>
-        <div style="font-size: 12px;">HP: <span id="monster-hp-text">20/20</span></div>
+<div class="game-container">
+    <h2>⚔️ MINI MU 2D ⚔️</h2>
+    
+    <div class="hud">
+        <span><b>Nv:</b> <span id="lvl">1</span></span>
+        <span><b>Zen:</b> <span id="zen" style="color:#ffd700;">0</span></span>
+        <span><b>Bless:</b> <span id="bless" style="color:#3498db;">0</span></span>
+        <span><b>Arma:</b> +<span id="weapon">0</span></span>
     </div>
 
-    <button class="btn btn-attack" onclick="playerAttack()">⚔️ ¡ATACAR! ⚔️</button>
+    <!-- Pantalla del Juego -->
+    <canvas id="gameCanvas" width="360" height="240"></canvas>
 
-    <!-- Estadísticas -->
-    <div class="stats-panel">
-        <div>💰 Zen: <span id="zen" style="color:#ffd700;">0</span> | 💎 Bless: <span id="bless" style="color:#3498db;">0</span></div>
-        <div>✨ Puntos Libres: <span id="points" style="color:#2ecc71;">0</span></div>
-        <hr style="border-color:#444; margin: 6px 0;">
-        <div style="display:flex; justify-content:space-around;">
-            <span>Fuerza (STR): <b id="str">10</b></span>
-            <span>Agilidad (AGI): <b id="agi">10</b></span>
+    <!-- Controles en Pantalla -->
+    <div class="controls-container">
+        <div class="d-pad">
+            <div></div>
+            <div class="btn-pad" onclick="move(0, -10)">▲</div>
+            <div></div>
+            <div class="btn-pad" onclick="move(-10, 0)">◄</div>
+            <div class="btn-pad" style="background:#222;"></div>
+            <div class="btn-pad" onclick="move(10, 0)">►</div>
+            <div></div>
+            <div class="btn-pad" onclick="move(0, 10)">▼</div>
+            <div></div>
         </div>
-        <div style="margin-top:6px;">
-            <button class="btn" onclick="addStat('str')">+ Fuerza</button>
-            <button class="btn" onclick="addStat('agi')">+ Agilidad</button>
-        </div>
+        <button class="btn-attack-2d" onclick="attackMonster()">⚔️<br>ATACAR</button>
     </div>
 
-    <!-- Mejoras de Equipo (Forja) -->
-    <div class="craft-panel">
-        <div style="font-size:12px; font-weight:bold; color:#f39c12;">🔨 Forja de Equipo (+<span id="weapon-lvl">0</span>)</div>
-        <button class="btn btn-upgrade" onclick="upgradeWeapon()">Mejorar Arma (Costo: 1 Bless)</button>
-    </div>
-
-    <!-- Registro de Combate -->
-    <div class="log-box" id="log">
-        <div>¡Bienvenido al continente de MU! Derrota monstruos para subir de nivel.</div>
+    <!-- Stats & Forja -->
+    <div class="panel-stats">
+        <div>Puntos Libres: <b id="pts" style="color:#2ecc71;">0</b></div>
+        STR: <b id="str">10</b> <button class="btn-stat" onclick="addStat('str')">+1</button> | 
+        AGI: <b id="agi">10</b> <button class="btn-stat" onclick="addStat('agi')">+1</button>
+        <div style="margin-top: 5px;">
+            <button class="btn-stat" style="background:#27ae60; padding:6px 12px;" onclick="upgradeWeapon()">🔨 Mejorar Arma (1 Bless)</button>
+        </div>
     </div>
 </div>
 
 <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
     // Datos del Jugador
     let player = {
+        x: 170,
+        y: 110,
+        size: 16,
+        speed: 10,
         level: 1,
         exp: 0,
-        expNext: 25,
+        expNext: 30,
         str: 10,
         agi: 10,
-        weaponLvl: 0,
-        points: 0,
+        weapon: 0,
         zen: 0,
-        bless: 0
+        bless: 0,
+        points: 0,
+        isAttacking: false
     };
 
-    // Zonas y Monstruos con Progresión Lineal
-    const monsters = [
-        { name: "Spider", hp: 25, maxHp: 25, exp: 10, zen: 5, zone: "Lorencia", levelReq: 1 },
-        { name: "Budge Dragon", hp: 55, maxHp: 55, exp: 22, zen: 12, zone: "Lorencia", levelReq: 3 },
-        { name: "Bull Fighter", hp: 120, maxHp: 120, exp: 50, zen: 28, zone: "Lorencia", levelReq: 7 },
-        { name: "Lich", hp: 280, maxHp: 280, exp: 110, zen: 65, zone: "Dungeon", levelReq: 12 },
-        { name: "Skeleton Warrior", hp: 600, maxHp: 600, exp: 240, zen: 130, zone: "Dungeon", levelReq: 20 },
-        { name: "Yeti", hp: 1200, maxHp: 1200, exp: 500, zen: 280, zone: "Devias", levelReq: 30 },
-        { name: "Ice Queen", hp: 2500, maxHp: 2500, exp: 1100, zen: 600, zone: "Devias", levelReq: 45 },
-        { name: "Poison Shadow", hp: 5000, maxHp: 5000, exp: 2300, zen: 1200, zone: "LostTower", levelReq: 60 },
-        { name: "Balgass Sentinel", hp: 12000, maxHp: 12000, exp: 5000, zen: 2500, zone: "LostTower", levelReq: 80 }
-    ];
+    // Monstruos Activos
+    let monster = {
+        x: 80,
+        y: 80,
+        size: 18,
+        name: "Spider",
+        hp: 30,
+        maxHp: 30,
+        exp: 15,
+        zen: 10,
+        color: "#8e44ad"
+    };
 
-    let monster = { ...monsters[0] };
+    function drawMap() {
+        // Fondo (Hierba de Lorencia)
+        ctx.fillStyle = "#2e3b1f";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Ataque del Jugador
-    function playerAttack() {
-        let weaponBonus = player.weaponLvl * 8;
-        let baseDamage = Math.floor(player.str * 1.3) + weaponBonus;
-        let damage = baseDamage + Math.floor(Math.random() * 6);
-        
-        monster.hp -= damage;
-
-        if (monster.hp <= 0) {
-            monster.hp = 0;
-            updateUI();
-            onMonsterDefeated();
-        } else {
-            updateUI();
+        // Cuadrícula decorativa estilo piso
+        ctx.strokeStyle = "#253018";
+        ctx.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += 30) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 30) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
         }
     }
 
-    // Monstruo derrotado
-    function onMonsterDefeated() {
-        log(`¡Derrotaste a ${monster.name}! +${monster.exp} EXP, +${monster.zen} Zen.`);
-        
-        player.zen += monster.zen;
-        player.exp += monster.exp;
+    function drawPlayer() {
+        // Cuerpo del Dark Knight (Azul/Gris)
+        ctx.fillStyle = "#2980b9";
+        ctx.fillRect(player.x, player.y, player.size, player.size);
 
-        // Drop de Jewel of Bless (6% probabilidad)
-        if (Math.random() < 0.06) {
-            player.bless += 1;
-            log(`<span class="item-text">✨ ¡Cayó una Jewel of Bless!</span>`);
+        // Casco/Cabeza
+        ctx.fillStyle = "#f39c12";
+        ctx.fillRect(player.x + 3, player.y - 4, 10, 5);
+
+        // Animación de Ataque (Espada)
+        if (player.isAttacking) {
+            ctx.fillStyle = "#ecf0f1";
+            ctx.fillRect(player.x + player.size, player.y - 5, 12, 4);
         }
+    }
 
-        // Subida de Nivel
-        while (player.exp >= player.expNext) {
-            levelUp();
+    function drawMonster() {
+        if (monster.hp > 0) {
+            // Cuerpo del Monstruo
+            ctx.fillStyle = monster.color;
+            ctx.fillRect(monster.x, monster.y, monster.size, monster.size);
+
+            // Barra de HP sobre el monstruo
+            ctx.fillStyle = "#c0392b";
+            ctx.fillRect(monster.x - 2, monster.y - 8, 22, 4);
+            ctx.fillStyle = "#2ecc71";
+            let hpWidth = (monster.hp / monster.maxHp) * 22;
+            ctx.fillRect(monster.x - 2, monster.y - 8, Math.max(0, hpWidth), 4);
         }
+    }
 
-        selectNextMonster();
+    function move(dx, dy) {
+        player.x = Math.max(5, Math.min(canvas.width - player.size - 5, player.x + dx));
+        player.y = Math.max(5, Math.min(canvas.height - player.size - 5, player.y + dy));
+        render();
+    }
+
+    function attackMonster() {
+        player.isAttacking = true;
+        setTimeout(() => { player.isAttacking = false; render(); }, 150);
+
+        // Distancia entre el jugador y el monstruo
+        let dist = Math.hypot((player.x - monster.x), (player.y - monster.y));
+
+        if (dist < 35) { // Rango de ataque
+            let dmg = Math.floor(player.str * 1.5) + (player.weapon * 6);
+            monster.hp -= dmg;
+
+            if (monster.hp <= 0) {
+                // Recompensas
+                player.zen += monster.zen;
+                player.exp += monster.exp;
+
+                if (Math.random() < 0.20) player.bless += 1; // 20% probabilidad de Bless
+
+                if (player.exp >= player.expNext) {
+                    player.level++;
+                    player.exp -= player.expNext;
+                    player.expNext = Math.floor(player.expNext * 1.4);
+                    player.points += 5;
+                }
+
+                respawnMonster();
+            }
+        }
         updateUI();
+        render();
     }
 
-    function selectNextMonster() {
-        let available = monsters.filter(m => m.levelReq <= player.level);
-        let selected = available[available.length - 1]; // Selecciona el monstruo más fuerte disponible
-        monster = { ...selected, maxHp: selected.hp };
-    }
-
-    function levelUp() {
-        player.level++;
-        player.exp -= player.expNext;
-        player.expNext = Math.floor(player.expNext * 1.35);
-        player.points += 5;
-        log(`🌟 ¡NIVEL ALCANZADO: ${player.level}! +5 Puntos de Stat.`);
+    function respawnMonster() {
+        // Reaparece en una ubicación aleatoria
+        monster.x = Math.floor(Math.random() * (canvas.width - 40)) + 20;
+        monster.y = Math.floor(Math.random() * (canvas.height - 40)) + 20;
+        monster.hp = 30 + (player.level * 15);
+        monster.maxHp = monster.hp;
     }
 
     function addStat(stat) {
         if (player.points > 0) {
-            player[stat] += 1;
+            player[stat]++;
             player.points--;
             updateUI();
         }
@@ -219,42 +279,39 @@
 
     function upgradeWeapon() {
         if (player.bless >= 1) {
-            player.bless -= 1;
-            player.weaponLvl += 1;
-            log(`<span class="item-text">🔨 ¡Arma mejorada a +${player.weaponLvl}! +8 Daño adicional.</span>`);
+            player.bless--;
+            player.weapon++;
             updateUI();
-        } else {
-            log(`❌ Necesitas 1 Jewel of Bless para mejorar.`);
         }
     }
 
-    function log(msg) {
-        const logBox = document.getElementById("log");
-        logBox.innerHTML = `<div>${msg}</div>` + logBox.innerHTML;
-    }
-
     function updateUI() {
-        document.getElementById("level").innerText = player.level;
+        document.getElementById("lvl").innerText = player.level;
         document.getElementById("zen").innerText = player.zen;
         document.getElementById("bless").innerText = player.bless;
-        document.getElementById("points").innerText = player.points;
+        document.getElementById("weapon").innerText = player.weapon;
+        document.getElementById("pts").innerText = player.points;
         document.getElementById("str").innerText = player.str;
         document.getElementById("agi").innerText = player.agi;
-        document.getElementById("weapon-lvl").innerText = player.weaponLvl;
-        document.getElementById("zone-name").innerText = `📍 Zona: ${monster.zone}`;
-
-        document.getElementById("monster-name").innerText = monster.name;
-        document.getElementById("monster-hp-text").innerText = `${monster.hp}/${monster.maxHp}`;
-        
-        let hpPercent = (monster.hp / monster.maxHp) * 100;
-        document.getElementById("monster-hp").style.width = `${hpPercent}%`;
     }
 
-    // Auto-Ataque progresivo por Agilidad
-    setInterval(() => {
-        playerAttack();
-    }, Math.max(900 - (player.agi * 12), 200));
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawMap();
+        drawMonster();
+        drawPlayer();
+    }
 
+    // Movimiento básico del monstruo (Moverse solo)
+    setInterval(() => {
+        if (monster.hp > 0) {
+            monster.x += (Math.random() - 0.5) * 8;
+            monster.y += (Math.random() - 0.5) * 8;
+            render();
+        }
+    }, 800);
+
+    render();
     updateUI();
 </script>
 </body>
