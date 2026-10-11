@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>MU Mobile 2D - Isometric Edition</title>
+    <title>MU Online 99B - Mobile Edition</title>
     <style>
         * { box-sizing: border-box; touch-action: none; margin: 0; padding: 0; }
         body {
-            background-color: #050505;
+            background-color: #030303;
             color: #fff;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,400 +18,222 @@
             overflow: hidden;
             user-select: none;
         }
-        .game-wrapper {
+
+        .mu-game-container {
             position: relative;
             width: 100%;
-            max-width: 420px;
-            background: #111;
-            border: 2px solid #332211;
-            box-shadow: 0 0 20px rgba(255, 150, 0, 0.3);
-            border-radius: 12px;
+            max-width: 440px;
+            background: #0a0806;
+            border: 3px solid #3d2813;
+            box-shadow: 0 0 25px rgba(255, 180, 50, 0.4);
+            border-radius: 8px;
             overflow: hidden;
         }
-        .header-bar {
-            background: linear-gradient(180deg, #2c1d11, #0f0a06);
-            padding: 8px 12px;
+
+        /* Barra Superior / Selector de Mapas */
+        .top-bar {
+            background: linear-gradient(180deg, #1f140c, #0d0805);
+            padding: 6px 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #553311;
+            border-bottom: 2px solid #553b1e;
+            font-size: 11px;
         }
-        .header-title { color: #f39c12; font-weight: bold; font-size: 14px; text-shadow: 0 0 4px #ff0000; }
-        .header-stats { font-size: 11px; color: #d1ccc0; }
+        .map-selector select {
+            background: #1a120b;
+            color: #f39c12;
+            border: 1px solid #7d572c;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
 
+        /* Lienzo del Juego (Mapas 2.5D) */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 270px;
+            background: #111;
+            overflow: hidden;
+        }
         canvas {
-            background: #12100e;
             display: block;
             width: 100%;
-            height: 260px;
+            height: 100%;
         }
 
-        /* HUD Estilo MU (Orbes y Botón de Ataque) */
-        .hud-bottom {
-            background: linear-gradient(180deg, #181410, #080605);
-            padding: 10px;
+        /* HUD Estilo 99B Inferior (Orbes y Menú) */
+        .mu-hud {
+            background: linear-gradient(180deg, #14100c, #050403);
+            border-top: 3px solid #3d2813;
+            padding: 6px 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-top: 2px solid #442200;
         }
-        .orb-container {
+
+        /* Orbes de Vida y Maná */
+        .orb-wrapper {
             display: flex;
-            gap: 12px;
             align-items: center;
+            gap: 8px;
         }
-        .orb {
-            width: 44px;
-            height: 44px;
+        .mu-orb {
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            border: 2px solid #666;
-            box-shadow: inset 0 0 10px #000, 0 0 8px rgba(0,0,0,0.8);
+            border: 2px solid #7d572c;
             position: relative;
             overflow: hidden;
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.5);
+            background: #110;
         }
-        .orb-hp { background: radial-gradient(circle at 30% 30%, #ff4d4d, #800000); }
-        .orb-mp { background: radial-gradient(circle at 30% 30%, #4d94ff, #002b80); }
+        .orb-fill-hp {
+            position: absolute;
+            bottom: 0; width: 100%;
+            background: linear-gradient(0deg, #cc0000, #ff3333);
+            transition: height 0.2s;
+        }
+        .orb-fill-mp {
+            position: absolute;
+            bottom: 0; width: 100%;
+            background: linear-gradient(0deg, #0044cc, #3388ff);
+            transition: height 0.2s;
+        }
+        .orb-text {
+            position: absolute;
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px; font-weight: bold; text-shadow: 1px 1px #000;
+        }
 
-        /* Botón de Ataque Twisting Slash */
-        .btn-slash {
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #e67e22, #a04000);
-            border: 2px solid #ffd700;
-            color: #fff;
+        /* Botones de Acción / Habilidades */
+        .action-cluster {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .mu-btn {
+            background: linear-gradient(180deg, #5e4122, #291c0f);
+            border: 2px solid #a3753c;
+            color: #ffd700;
             font-weight: bold;
             font-size: 11px;
-            box-shadow: 0 0 12px rgba(230, 126, 34, 0.6);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            padding: 6px 10px;
+            border-radius: 4px;
             cursor: pointer;
+            text-shadow: 1px 1px #000;
+            box-shadow: 0 3px #110a04;
         }
-        .btn-slash:active { transform: scale(0.92); filter: brightness(1.2); }
+        .mu-btn:active { transform: translateY(2px); box-shadow: 0 1px #110a04; }
+        .btn-skill {
+            background: linear-gradient(180deg, #c0392b, #641e16);
+            border-color: #e74c3c;
+            color: #fff;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            font-size: 10px;
+        }
 
-        /* Control D-Pad Joystick */
-        .joystick-zone {
-            width: 90px;
-            height: 90px;
+        /* Joystick Táctil Movimiento */
+        .joystick-base {
+            width: 75px; height: 75px;
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 215, 0, 0.3);
+            border: 2px solid rgba(243, 156, 18, 0.3);
             border-radius: 50%;
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
         }
-        .joystick-stick {
-            width: 35px;
-            height: 35px;
-            background: linear-gradient(135deg, #d35400, #6e2c00);
-            border: 1px solid #ffb900;
+        .joystick-knob {
+            width: 32px; height: 32px;
+            background: radial-gradient(circle, #f39c12, #935116);
+            border: 1px solid #ffd700;
             border-radius: 50%;
             position: absolute;
+            box-shadow: 0 0 6px #000;
         }
 
-        .panel-menu {
-            background: #0f0c0a;
-            padding: 8px;
-            font-size: 11px;
-            color: #aaa;
-            display: flex;
-            justify-content: space-between;
+        /* Ventana Flotante de Inventario / Stats */
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            display: none;
+            justify-content: center;
             align-items: center;
-            border-top: 1px solid #22150a;
+            z-index: 10;
         }
-        .btn-stat {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
+        .mu-window {
+            background: linear-gradient(135deg, #1b130e, #0c0806);
+            border: 3px solid #7d572c;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 360px;
+            padding: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.9);
         }
+        .window-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid #553b1e;
+            padding-bottom: 5px; margin-bottom: 8px;
+            color: #f39c12; font-size: 13px; font-weight: bold;
+        }
+        .close-btn { color: #e74c3c; cursor: pointer; font-size: 16px; font-weight: bold; }
+        
+        .inv-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            background: #080605;
+            padding: 6px;
+            border: 1px solid #422d17;
+            margin-top: 8px;
+        }
+        .inv-slot {
+            background: #14100c;
+            border: 1px solid #332211;
+            height: 45px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 9px; color: #d1ccc0;
+        }
+        .item-icon { font-size: 16px; }
+
+        .stat-row { display: flex; justify-content: space-between; font-size: 12px; margin: 5px 0; }
+        .stat-btn { background: #27ae60; border: none; color: white; padding: 2px 8px; border-radius: 3px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="game-wrapper">
-    <div class="header-bar">
-        <div class="header-title">⚔️ MU ONLINE 2D ⚔️</div>
-        <div class="header-stats">
-            Nv. <b id="lvl" style="color:#2ecc71">1</b> | 
-            Zen: <b id="zen" style="color:#f1c40f">0</b> | 
-            Bless: <b id="bless" style="color:#3498db">0</b>
+<div class="mu-game-container">
+    <!-- Barra Superior -->
+    <div class="top-bar">
+        <div><b>MU 99B</b> | Nv: <span id="lvl" style="color:#2ecc71">1</span></div>
+        <div class="map-selector">
+            Mapa: 
+            <select id="mapSelect" onchange="changeMap(this.value)">
+                <option value="lorencia">Lorencia</option>
+                <option value="noria">Noria</option>
+                <option value="devias">Devias (Nieve)</option>
+            </select>
         </div>
+        <div>Zen: <span id="zen" style="color:#f1c40f">0</span></div>
     </div>
 
-    <canvas id="gameCanvas" width="380" height="260"></canvas>
-
-    <div class="hud-bottom">
-        <!-- Controles Joystick -->
-        <div class="joystick-zone" id="joyZone">
-            <div class="joystick-stick" id="joyStick"></div>
-        </div>
-
-        <!-- Orbes de Vida y Mana -->
-        <div class="orb-container">
-            <div class="orb orb-hp" title="HP"></div>
-            <div class="orb orb-mp" title="MP"></div>
-        </div>
-
-        <!-- Botón de Habilidad -->
-        <button class="btn-slash" onclick="triggerSkill()">
-            <span style="font-size:16px;">🌪️</span>
-            <span>SLASH</span>
-        </button>
+    <!-- Canvas de Juego -->
+    <div class="canvas-wrapper">
+        <canvas id="gameCanvas" width="400" height="270"></canvas>
     </div>
 
-    <div class="panel-menu">
-        <div>Pts: <b id="pts" style="color:#2ecc71">0</b> | STR: <b id="str">10</b> <button class="btn-stat" onclick="addStat('str')">+1</button></div>
-        <button class="btn-stat" style="background:#e67e22" onclick="upgradeWeapon()">🔨 Forjar (+<span id="weapon">0</span>)</button>
-    </div>
-</div>
+    <!-- HUD Estilo 99B -->
+    <div class="mu-hud">
+        <!-- Joystick Movimiento -->
+        <div class="joystick-base" id="joyBase">
+            <div class="joystick-knob" id="joyKnob"></div>
+        </div>
 
-<script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
-
-    // Jugador (Dark Knight)
-    let player = {
-        x: 190, y: 130,
-        speed: 2.2,
-        level: 1, exp: 0, expNext: 30,
-        str: 10, agi: 10, weapon: 0,
-        zen: 0, bless: 0, points: 0,
-        isAttacking: false, attackAngle: 0
-    };
-
-    // Monstruo
-    let monster = {
-        x: 100, y: 80,
-        hp: 35, maxHp: 35,
-        type: "Spider",
-        color: "#8e44ad"
-    };
-
-    // Joystick Virtual
-    let joy = { active: false, dx: 0, dy: 0 };
-    const joyZone = document.getElementById("joyZone");
-    const joyStick = document.getElementById("joyStick");
-
-    joyZone.addEventListener("touchstart", handleJoyStart);
-    joyZone.addEventListener("touchmove", handleJoyMove);
-    joyZone.addEventListener("touchend", handleJoyEnd);
-
-    function handleJoyStart(e) { joy.active = true; handleJoyMove(e); }
-    function handleJoyMove(e) {
-        if (!joy.active) return;
-        let rect = joyZone.getBoundingClientRect();
-        let touch = e.touches[0];
-        let x = touch.clientX - (rect.left + rect.width / 2);
-        let y = touch.clientY - (rect.top + rect.height / 2);
-        let dist = Math.hypot(x, y);
-        let maxDist = 30;
-
-        if (dist > maxDist) { x = (x / dist) * maxDist; y = (y / dist) * maxDist; }
-        joyStick.style.transform = `translate(${x}px, ${y}px)`;
-        joy.dx = x / maxDist;
-        joy.dy = y / maxDist;
-    }
-    function handleJoyEnd() {
-        joy.active = false;
-        joy.dx = 0; joy.dy = 0;
-        joyStick.style.transform = `translate(0px, 0px)`;
-    }
-
-    // Dibujar Suelo Isométrico (Baldosas de Lorencia)
-    function drawIsometricGrid() {
-        ctx.fillStyle = "#161311";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.strokeStyle = "#241e1a";
-        ctx.lineWidth = 1;
-        for (let x = -200; x < canvas.width + 200; x += 40) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x + canvas.height, canvas.height);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x - canvas.height, canvas.height);
-            ctx.stroke();
-        }
-    }
-
-    // Dibujar Dark Knight (Caballero con Armadura)
-    function drawPlayer() {
-        ctx.save();
-        ctx.translate(player.x, player.y);
-
-        // Sombra en el suelo
-        ctx.fillStyle = "rgba(0,0,0,0.5)";
-        ctx.beginPath();
-        ctx.ellipse(0, 12, 12, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Cuerpo/Armadura (Plate Armor)
-        ctx.fillStyle = "#34495e"; // Pecho metálico
-        ctx.fillRect(-8, -12, 16, 18);
-
-        // Hombreras Doradas / Capa Roja
-        ctx.fillStyle = "#c0392b"; // Capa
-        ctx.fillRect(-10, -10, 4, 16);
-        ctx.fillStyle = "#f39c12"; // Hombrera
-        ctx.fillRect(-11, -14, 6, 6);
-        ctx.fillRect(5, -14, 6, 6);
-
-        // Casco con brillo
-        ctx.fillStyle = "#7f8c8d";
-        ctx.fillRect(-5, -22, 10, 10);
-        ctx.fillStyle = "#e74c3c"; // Pluma del casco
-        ctx.fillRect(-2, -26, 4, 5);
-
-        // Espada
-        ctx.fillStyle = "#ecf0f1";
-        ctx.fillRect(8, -18, 3, 20);
-        ctx.fillStyle = "#f1c40f"; // Empuñadura
-        ctx.fillRect(6, -4, 7, 3);
-
-        // Animación Twisting Slash
-        if (player.isAttacking) {
-            ctx.strokeStyle = "rgba(241, 196, 15, 0.8)";
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(0, -5, 28, player.attackAngle, player.attackAngle + Math.PI);
-            ctx.stroke();
-        }
-
-        ctx.restore();
-    }
-
-    // Dibujar Monstruo (Spider)
-    function drawMonster() {
-        if (monster.hp <= 0) return;
-
-        ctx.save();
-        ctx.translate(monster.x, monster.y);
-
-        // Sombra
-        ctx.fillStyle = "rgba(0,0,0,0.4)";
-        ctx.beginPath();
-        ctx.ellipse(0, 8, 10, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Cuerpo Araña
-        ctx.fillStyle = monster.color;
-        ctx.beginPath();
-        ctx.arc(0, 0, 10, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Ojos Rojos
-        ctx.fillStyle = "#ff0000";
-        ctx.fillRect(-4, -4, 3, 3);
-        ctx.fillRect(1, -4, 3, 3);
-
-        // Barra de Vida
-        ctx.fillStyle = "#333";
-        ctx.fillRect(-12, -18, 24, 4);
-        ctx.fillStyle = "#e74c3c";
-        ctx.fillRect(-12, -18, (monster.hp / monster.maxHp) * 24, 4);
-
-        ctx.restore();
-    }
-
-    function triggerSkill() {
-        player.isAttacking = true;
-        player.attackAngle = 0;
-
-        let interval = setInterval(() => {
-            player.attackAngle += 0.5;
-            if (player.attackAngle > Math.PI * 4) {
-                clearInterval(interval);
-                player.isAttacking = false;
-            }
-        }, 30);
-
-        // Daño a monstruos cercanos
-        let dist = Math.hypot(player.x - monster.x, player.y - monster.y);
-        if (dist < 50 && monster.hp > 0) {
-            let damage = Math.floor(player.str * 1.8) + (player.weapon * 8);
-            monster.hp -= damage;
-
-            if (monster.hp <= 0) {
-                player.zen += 15;
-                player.exp += 20;
-                if (Math.random() < 0.25) player.bless += 1;
-
-                if (player.exp >= player.expNext) {
-                    player.level++;
-                    player.exp -= player.expNext;
-                    player.expNext = Math.floor(player.expNext * 1.4);
-                    player.points += 5;
-                }
-
-                setTimeout(respawnMonster, 1000);
-            }
-            updateUI();
-        }
-    }
-
-    function respawnMonster() {
-        monster.x = Math.floor(Math.random() * 260) + 60;
-        monster.y = Math.floor(Math.random() * 160) + 40;
-        monster.hp = 35 + (player.level * 10);
-        monster.maxHp = monster.hp;
-    }
-
-    function addStat(stat) {
-        if (player.points > 0) {
-            player[stat]++;
-            player.points--;
-            updateUI();
-        }
-    }
-
-    function upgradeWeapon() {
-        if (player.bless >= 1) {
-            player.bless--;
-            player.weapon++;
-            updateUI();
-        }
-    }
-
-    function updateUI() {
-        document.getElementById("lvl").innerText = player.level;
-        document.getElementById("zen").innerText = player.zen;
-        document.getElementById("bless").innerText = player.bless;
-        document.getElementById("pts").innerText = player.points;
-        document.getElementById("str").innerText = player.str;
-        document.getElementById("weapon").innerText = player.weapon;
-    }
-
-    // Bucle Principal del Juego (60 FPS)
-    function gameLoop() {
-        // Movimiento con Joystick
-        if (joy.active) {
-            player.x += joy.dx * player.speed;
-            player.y += joy.dy * player.speed;
-
-            // Limitar dentro del mapa
-            player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
-            player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
-        }
-
-        drawIsometricGrid();
-        drawMonster();
-        drawPlayer();
-
-        requestAnimationFrame(gameLoop);
-    }
-
-    updateUI();
-    gameLoop();
-</script>
-</body>
-</html>
+        <!-- Orbes HP / MP -->
+        <div class="orb-wrapper">
+            <div class="mu-orb" title="HP">
+                <div class="orb-fill-hp" id="hpFill" style="height: 100%;"></div>
+                <div class="orb-text" id="hpText">100/
